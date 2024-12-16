@@ -418,7 +418,7 @@ Ce projet a permis de confirmer la bonne compréhension des principes de modéli
 L’ensemble du processus – de la conceptualisation à la mise en place de la base relationnelle, du nettoyage à l’insertion, puis de l’exploration via des requêtes ciblées – a démontré la pertinence des bonnes pratiques de gestion de bases de données.<br>
 En outre, ce travail a renforcé nos compétences techniques en SQL, en manipulation de données et en réflexion sur la qualité des données, préfigurant une montée en échelle vers des volumes plus importants. <br>
 Je remercie sincèrement les professeurs de l’Université de La Rochelle, Carlos-Emiliano González-Gallardo et Marwa Hamdi, pour leur encadrement, ainsi que pour l’opportunité d’appliquer concrètement les connaissances acquises.<br>
-Pour finir je tiens à remercier Florian Chacun avec qui nous avons travailler en binôme sur ce projet.
+Pour finir je tiens à remercier Florian Chacun avec qui nous avons travaillés en binôme sur ce projet.
 
 
 ## Auteurs
