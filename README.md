@@ -1,15 +1,48 @@
 <center>
 
-# Projet modélisation de bases de données
+# Projet de modélisation de bases de données
 
 ##### Arthur Gillier - Florian Chacun
 
 </center>
 
 
+## Résumé
+
+Ce rapport présente un travail de modélisation, de nettoyage et d’analyse d’un ensemble de données historiques extraites d’archives départementales de mariages. L’objectif est de démontrer la maîtrise des principes de modélisation relationnelle, de normalisation et de gestion d’une base de données relationnelle sous PostgreSQL. Après avoir conceptualisé le schéma, nettoyé les données sources et inséré ces dernières dans les tables définies, diverses requêtes ont été exécutées afin de répondre à des questions spécifiques (quantités d’actes, de communes, période temporelle, etc.). Les résultats montrent la validité de la démarche, malgré les données parfois incomplètes ou bruitées. Enfin, ce travail discute des difficultés rencontrées, ainsi que des perspectives d’amélioration, notamment pour le traitement d’un fichier plus volumineux (500k lignes).
+
+- [Projet de modélisation de bases de données](#projet-de-modélisation-de-bases-de-données)
+- [Introduction](#introduction)
+- [Cadre méthodologique et théorique](#cadre-méthodologique-et-théorique)
+- [Conceptualisation et modélisation des bases de données](#conceptualisation-et-modélisation-des-bases-de-données)
+    - [Description des données](#description-des-données)
+    - [Définition des tables et des attributs](#définition-des-tables-et-des-attributs)
+    - [Gestion des clés primaires et étrangères](#gestion-des-clés-primaires-et-étrangères)
+    - [Relation entre les tables](#relation-entre-les-tables)
+- [Schéma de la base de données](#schéma-de-la-base-de-données)
+- [Normalisation du schéma rationnel](#normalisation-du-schéma-rationnel)
+    - [Principes de la normalisation](#principes-de-la-normalisation)
+- [Création des tables](#création-des-tables)
+    - [Table département](#table-département)
+    - [Table type d'acte](#table-type)
+    - [Table commune](#table-commune)
+    - [Table personne](#table-personne)
+    - [Table acte](#table-acte)
+- [Procédures de Nettoyage, Transformation et Insertion des Données](#procédures-de-nettoyage-transformation-et-insertion-des-données)
+    - [Récupération des actes](#récupération-des-actes)
+    - [Ajout des realtions](#ajout-des-relations)
+        - [Acte -> Commune](#acte---commune)
+        - [Acte -> Personne (a) & (b)](#acte---personne-a--b)
+- [Résultats et requêtes d'analyses](#résultats-et-requêtes-danalyse)
+- [Difficultés rencontrées et limitations](#difficultés-rencontrées-et-limitations)
+- [Perspectives et améliorations possibles](#perspectives-et-améliorations-possibles)
+- [Conclusion](#conclusion)
+- [Auteurs](#auteurs)
+
 ## Introduction
 
-Ce projet a été réalisé dans le cadre du cours de Modélisation de Bases de données de l'Université de La Rochelle. Il a pour but de mettre en place une base de données relationnelle à partir de données issues de fichiers d'actes de mariage. Il faudra les nettoyer, les parser et les insérer de manière optimale dans une base de données PostgreSQL.
+L’objectif de ce projet, mené dans le cadre du cours de Modélisation de Bases de Données à l’Université de La Rochelle, est de mettre en pratique les compétences acquises en matière de conception, de normalisation et de manipulation de bases de données relationnelles. Il s’agissait de partir d’un jeu de données historiques de mariages, possédant des attributs hétérogènes et parfois imparfaits, afin de créer une base de données relationnelle exploitable.
+Ce projet permet de consolider les acquis en SQL, de renforcer la compréhension de la normalisation et d’appréhender la gestion de données réelles, souvent imparfaites. Le résultat attendu est un système permettant aux utilisateurs (généalogistes, démographes) de consulter et d’analyser efficacement les données de mariage.
 
 ```bash
 ├── output
@@ -27,14 +60,20 @@ Ce projet a été réalisé dans le cadre du cours de Modélisation de Bases de 
     └── questions.sql
 ```
 
-## Conceptualisation et Modélisation des bases de données
+## Cadre méthodologique et théorique
 
-La première étape de ce projet consiste à comprendre les données fournies et les modéliser de manière à répondre aux besoins initial.
+Le projet s’appuie sur les fondements de la modélisation relationnelle et sur les bonnes pratiques établies dans la communauté des SGBD. Les données ont été structurées conformément aux principes des trois premières formes normales (1NF, 2NF, 3NF) afin de réduire la redondance, d’améliorer la cohérence et de faciliter les mises à jour.
+La normalisation garantit notamment que chaque relation ne contient que des attributs atomiques, que les dépendances partielles soient éliminées, et qu’aucune dépendance transitive entre attributs non-clés n’existe. De plus, en respectant les propriétés ACID (Atomicité, Cohérence, Isolation, Durabilité) et en suivant les standards de modélisation relationnelle, le système gagne en robustesse, maintenabilité et évolutivité.
+
+## Conceptualisation et modélisation des bases de données
+
+La première étape de ce projet consiste à comprendre les données fournies et les modéliser de manière à répondre au besoin initial.
 
 ### Description des données
 
 Les données sont extraites des archives départementales de Vendée et comprennent des informations détaillées sur les mariages enregistrés. Chaque enregistrement contenu dans le fichier mariages_L3_5k.csv comprend les colonnes suivantes :
 
+```bash
 1. Identifiant d’acte 
 2. Type d’acte
 3. Nom personne A
@@ -51,6 +90,7 @@ Les données sont extraites des archives départementales de Vendée et comprenn
 14. Département 
 15. Date
 16. Num Vue
+```
 
 ### Définition des tables et des attributs
 
@@ -59,14 +99,18 @@ Sur la base de la description des données, nous avons identifié plusieurs enti
 
 Notre base de données sera donc représenté par ces tables :
 
-• Acte : id, type, personne_a, personne_b, date, commune, num_vue <br>
-• Personne : id, nom, prenom, prenom_pere, nom_mere, prenom_mere <br>
+```bash
+• Acte : id, type, personne_a, personne_b, date, commune, num_vue
+• Personne : id, nom, prenom, prenom_pere, nom_mere, prenom_mere
 • Commune : id, departement, nom
+```
 
-Nous avons choisi de créer deux énumérations pour les types d'actes et les départements car nous avons un ensembles fini de valeurs possibles (les libelles pour les types et les numéros pour les départements). De plus cela offre des avantages en termes de cohérence des données, de facilité de maintenance et de lecture simplifiée.
+Nous avons choisi de créer deux énumérations pour les types d'actes et les départements car nous avons un ensembles fini de valeurs possibles (les libéllés pour les types et les numéros pour les départements). De plus cela offre des avantages en termes de cohérence des données, de facilité de maintenance et de lecture simplifiée.
 
-• Departement : numéro <br>
+```bash
+• Departement : numéro
 • Type : libelle
+```
 
 Il ne sera donc pas nécessaire d'avoir des contraintes de clés étrangères entre Acte/Type et Commune/Departement
 
@@ -74,30 +118,33 @@ Il ne sera donc pas nécessaire d'avoir des contraintes de clés étrangères en
 
 Pour garantir l'intégrité et la cohérence des données, il faut définir les clés primaires et étrangères. Chaque table aura une clé primaire qui sera un identifiant unique. De plus, les relations entre les tables seront établies à l'aide de clés étrangères sur des liens logiques entre les différentes données.
 
-Nous avons donc pour chaque table, un attribut id comme clé primaire. 
+Nous avons donc pour chaque table, un attribut ```id``` comme clé primaire. 
 
 Pour ce qui est des clés étrangères :
 
-• Acte :<br><br>
-    • “personne_a” et “personne_b” associés à la table Personne <br>
-    •  “commune” associé à la table Commune
+```bash
+Acte :
+
+“personne_a” et “personne_b” associées à la table Personne
+“commune” associée à la table Commune
+```
 
 ### Relation entre les tables 
 
 Dans notre schéma de base de données pour les registres de mariages, nous avons identifié et choisit d'utiliser une realtion Many-to-One.
 
-**Relation Many-to-One entre la Table "acte" et la Table "personne"**
+**Relation Many-to-One entre la Table ```acte``` et la Table ```personne```**
 
-Chaque acte peut impliquer deux personnes distinctes : la personne A et la personne B. Pour modéliser cette relation, "personne_a" et "personne_b" servent de clés étrangères faisant référence aux identifiants uniques des personnes dans la table "personne".
+Chaque acte peut impliquer deux personnes distinctes : la personne A et la personne B. Pour modéliser cette relation, ```personne_a``` et ```personne_b``` servent de clés étrangères faisant référence aux identifiants uniques des personnes dans la table ```personne```.
 
-Cette relation many-to-one entre les tables "acte" et "personne" permet de représenter le lien entre les actes enregistrés et les personnes dans chaque acte. Un acte de mariage peut avoir deux personnes impliquées (personne_a et personne_b), et chaque personne peut être liée à plusieurs actes.
+Cette relation many-to-one entre les tables ```acte``` et ```personne``` permet de représenter le lien entre les actes enregistrés et les personnes dans chaque acte. Un acte de mariage peut avoir deux personnes impliquées (personne_a et personne_b), et chaque personne peut être liée à plusieurs actes.
 
 
-**Relation Many-to-One entre la Table "acte" et la Table "commune"** 
+**Relation Many-to-One entre la Table ```acte``` et la Table ```commune```** 
 
-Chaque acte de mariage est enregistré dans une commune. Pour représenter cette association, la colonne "commune" dans la table "acte" est une clé étrangère faisant référence aux identifiants uniques des communes dans la table "commune".
+Chaque acte de mariage est enregistré dans une commune. Pour représenter cette association, la colonne ```commune``` dans la table ```acte``` est une clé étrangère faisant référence aux identifiants uniques des communes dans la table ```commune```.
 
-Cette relation many-to-one entre les tables "acte" et "commune" permet de lier chaque acte de mariage à la commune où il a été enregistré. Un acte peut être enregistré dans une seule commune, mais plusieurs actes peuvent être enregistrés dans la même commune. Cela facilite la recherche et l'analyse des actes de mariage selon leur lieu d'enregistrement.
+Cette relation many-to-one entre les tables ```acte``` et ```commune``` permet de lier chaque acte de mariage à la commune où il a été enregistré. Un acte peut être enregistré dans une seule commune, mais plusieurs actes peuvent être enregistrés dans la même commune. Cela facilite la recherche et l'analyse des actes de mariage selon leur lieu d'enregistrement.
 
 
 ## Schéma de la base de données
@@ -107,9 +154,9 @@ Cette relation many-to-one entre les tables "acte" et "commune" permet de lier c
 
 Notez que les tables `departement`et `type` ne sont pas réellement des tables mais des enums.
 
-# Normalisation du schéma rationnel
+## Normalisation du schéma rationnel
 
-## Principes de la normalisation
+### Principes de la normalisation
 
 La normalisation est le processus qui vise à réduire la redondance des données, à améliorer l'intégrité et à minimiser les anomalies lors de la manipulation des données. Nous nous sommes basés sur les formes normales, dont les principales sont la première forme normale (1NF), la deuxième forme normale (2NF), et la troisième forme normale (3NF).
 
@@ -137,19 +184,19 @@ Par exemple, dans notre table "Commune", l'attribut "departement" dépend direct
 
 ## Création des tables
 
-### Département
+### Table `Département`
 
 ```sql 
 CREATE TYPE departement AS ENUM ('44', '49', '79', '85');
 ```
 
-### Type 
+### Table `Type`
 
 ```sql
 CREATE TYPE type_acte AS ENUM ('Certificat de mariage', 'Contrat de mariage', 'Divorce', 'Mariage', 'Promesse de mariage - fiançailles', 'Publication de mariage', 'Rectification de mariage');
 ```
 
-### Commune 
+### Table `Commune`
 
 ```sql
 CREATE TABLE IF NOT EXISTS commune(
@@ -159,7 +206,7 @@ CREATE TABLE IF NOT EXISTS commune(
 )
 ```
 
-### Personne
+### Table `Personne`
 
 ```sql
 CREATE TABLE IF NOT EXISTS personne (
@@ -172,7 +219,7 @@ CREATE TABLE IF NOT EXISTS personne (
 );
 ```
 
-### Acte
+### Table `Acte`
 
 ```sql
 CREATE TABLE acte(
@@ -185,12 +232,10 @@ CREATE TABLE acte(
 	num_vue VARCHAR(255) DEFAULT 'null'
 )
 ```
+## Procédures de Nettoyage, Transformation et Insertion des Données
 
-## Découpage des données
+Les données sources, issues de fichiers CSV, présentaient des imprécisions (données manquantes, formats de dates hétérogènes, noms accentués, etc.). Un pré-traitement a été effectué à l’aide de commandes Linux (cut, sort, uniq, awk) afin de filtrer et réorganiser les données. Des scripts Python ont ensuite été utilisés pour associer chaque personne, commune ou acte à son identifiant unique et produire des fichiers finaux cohérents.
 
-En suivant la méthode donnée.
-
-Découpage du csv :
 
 ```bash
 # Découpage du fichier mariage_L3_5k.csv pour obtenir les communes et les personnes.
@@ -205,7 +250,7 @@ awk -F, '{print NR","$0}' personne.csv > personne_id.csv
 awk -F, '{print NR","$0}' commune.csv > commune_id.csv
 ```
 
-## Récupération des actes
+### Récupération des actes
 
 Afin de récupérer les actes nous avons utiliser un script python qui utilise les fichiers `mariages_L3_5k.csv`, `personne_id.csv` et `commune_id.csv` pour générer un fichier `actes.csv` qui contient les actes de mariage.
 
@@ -275,15 +320,15 @@ COPY acte (id,type_id,personne_a,personne_b,commune,date_,num_vue) FROM 'C:\Prog
 COPY commune (id,nom,departement) FROM 'C:\Program Files\PostgreSQL\16\mariages\commune_id.csv' DELIMITER ',' CSV;
 ```
 
-## Ajout des relations 
+### Ajout des relations 
 
-### Acte -> Commune
+#### Acte -> Commune
 
 ```sql
 ALTER TABLE acte ADD CONSTRAINT acte_fk3 FOREIGN KEY (commune) REFERENCES commune(id);
 ```
 
-### Acte -> Personne (a) & (b)
+#### Acte -> Personne (a) & (b)
 
 ```sql
 /* Acte -> Personne (a) */
@@ -292,19 +337,22 @@ ALTER TABLE acte ADD CONSTRAINT acte_fk1 FOREIGN KEY (personne_a) REFERENCES per
 ALTER TABLE acte ADD CONSTRAINT acte_fk2 FOREIGN KEY (personne_b) REFERENCES personne(id);
 ```
 
-## Requêtes 
+## Résultats et requêtes d’analyse 
+
+Plusieurs requêtes ont été exécutées afin de répondre aux questions posées :
 
 **La quantité de communes par département**
+: un simple GROUP BY sur la table des communes permet d’obtenir le nombre de communes distinctes par département.
 
 ```sql
 SELECT departement, COUNT(*) AS nombre_de_communes
 FROM commune
 GROUP BY departement;
 ```
-Résultat :
+Résultat : <br>
 ![https://i.imgur.com/TQwhhrO.png](https://i.imgur.com/DQoVwIS.png)
 
-**La quantité d'actes à LUÇON**
+**La quantité d'actes à LUÇON** : Une jointure entre “acte” et “commune” suivie d’un filtrage sur le nom permet de compter le nombre d’actes dans cette localité.
 
 ```sql
 SELECT COUNT(*) AS nombre_d_actes
@@ -314,7 +362,7 @@ WHERE commune.nom = 'LUÇON';
 ```
 Résultat : `105`
 
-**La quantité de “contrats de mariage” avant 1855**
+**La quantité de “contrats de mariage” avant 1855** : En filtrant par type d’acte et date, on obtient le nombre exact de contrats antérieurs à cette date.
 
 ```sql
 SELECT COUNT(*) AS nombre_de_contrats_de_mariage
@@ -323,7 +371,7 @@ WHERE type_id = 'Contrat de mariage' AND date_ < '1855-01-01';
 ```
 Résultat : `196`
 
-**La commune avec la plus quantité de “publications de mariage”**
+**La commune avec la plus quantité de “publications de mariage”** : Un GROUP BY sur les actes de type “Publication de mariage” et un tri décroissant fournissent la commune la plus concernée.
 
 ```sql
 SELECT commune.nom AS commune,
@@ -337,7 +385,7 @@ LIMIT 1;
 ```
 Résultat : `SAINT PIERRE DU CHEMIN : 20`
 
-**La date du premier acte et le dernier acte**
+**La date du premier acte et le dernier acte** : Un simple MIN et MAX sur la colonne date_ des actes révèle l’étendue chronologique couverte.
 
 ```sql
 SELECT MIN(date_) AS premiere_date_acte, 
@@ -346,10 +394,31 @@ FROM acte;
 ```
 Résultat : `Première date : "1581-12-23 00:00:00+00:09:21"` & `Dernière date : "1915-09-14 00:00:00+00"`
 
+Les résultats montrent une bonne cohérence. Les requêtes renvoient les quantités attendues, malgré l’exclusion de certaines données manquantes. Ce constat illustre le compromis entre exhaustivité et qualité des données.
+
+## Difficultés rencontrées et limitations
+
+La principale difficulté a résidé dans la qualité variable des données sources. Certaines entrées étaient partielles, d’autres non conformes au format attendu. Les choix effectués (exclusion des enregistrements incomplets, utilisation d’ENUM pour restreindre les valeurs possibles) ont renforcé la cohérence globale, mais au prix d’une réduction du volume exploitable. <br>
+En termes de performance, le volume gérable pour la phase test (5k lignes) était relativement modeste. Le passage à un ensemble de 500k lignes soulèvera des défis supplémentaires en termes de gestion de la mémoire, de temps de chargement et de robustesse du processus de nettoyage.
+
+## Perspectives et améliorations possibles
+
+Pour traiter efficacement un fichier de grande envergure (500k lignes), une méthodologie plus avancée serait nécessaire, impliquant :
+
+- Une stratégie de nettoyage plus industrielle (scripts robustes, automatisation des contrôles de qualité, utilisation de batch processing).
+- Des index supplémentaires sur les tables clés pour accélérer les requêtes.
+- Des outils plus puissants pour le parsing (p. ex. utilisation de pandas en Python, gestion en flux, etc.) et des traitements par lot pour limiter l’impact sur les ressources.
+- Une gestion plus fine des valeurs manquantes, éventuellement via des techniques d’imputation ou une intégration plus élaborée de métadonnées.
+
+Ces améliorations permettraient de maintenir les performances, la cohérence et la pertinence des données à plus grande échelle.
 
 ## Conclusion
 
-Tout est fonctionnel pour le fichier de 5k lignes, pour passer sur le fichier à 500k lignes il faudrait ajouter une table département et une table type d'actes. Il faudrait également modifier le script python pour qu'il prenne en compte ces nouvelles tables.
+Ce projet a permis de confirmer la bonne compréhension des principes de modélisation, de normalisation et de gestion des données dans un contexte réaliste, où la qualité et la cohérence des données n’étaient pas toujours garanties. <br>
+L’ensemble du processus – de la conceptualisation à la mise en place de la base relationnelle, du nettoyage à l’insertion, puis de l’exploration via des requêtes ciblées – a démontré la pertinence des bonnes pratiques de gestion de bases de données.<br>
+En outre, ce travail a renforcé nos compétences techniques en SQL, en manipulation de données et en réflexion sur la qualité des données, préfigurant une montée en échelle vers des volumes plus importants. <br>
+Je remercie sincèrement les professeurs de l’Université de La Rochelle, Carlos-Emiliano González-Gallardo et Marwa Hamdi, pour leur encadrement, ainsi que pour l’opportunité d’appliquer concrètement les connaissances acquises.<br>
+Pour finir je tiens à remercier Florian Chacun avec qui nous avons travailler en binôme sur ce projet.
 
 
 ## Auteurs
