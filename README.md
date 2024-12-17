@@ -44,22 +44,6 @@ Ce rapport présente un travail de modélisation, de nettoyage et d’analyse d�
 L’objectif de ce projet, mené dans le cadre du cours de Modélisation de Bases de Données à l’Université de La Rochelle, est de mettre en pratique les compétences acquises en matière de conception, de normalisation et de manipulation de bases de données relationnelles. Il s’agissait de partir d’un jeu de données historiques de mariages, possédant des attributs hétérogènes et parfois imparfaits, afin de créer une base de données relationnelle exploitable.
 Ce projet permet de consolider les acquis en SQL, de renforcer la compréhension de la normalisation et d’appréhender la gestion de données réelles, souvent imparfaites. Le résultat attendu est un système permettant aux utilisateurs (généalogistes, démographes) de consulter et d’analyser efficacement les données de mariage.
 
-```bash
-├── output
-│   ├── actes.csv
-│   ├── communes_id.csv
-│   └── personnes_id.csv
-├── scripts
-│   └── insert_acte.py
-├── source
-│   ├── mariages.csv
-│   └── mariages_L3.csv
-└── sql
-    ├── create.sql
-    ├── drop.sql
-    └── questions.sql
-```
-
 ## Cadre méthodologique et théorique
 
 Le projet s’appuie sur les fondements de la modélisation relationnelle et sur les bonnes pratiques établies dans la communauté des SGBD. Les données ont été structurées conformément aux principes des trois premières formes normales (1NF, 2NF, 3NF) afin de réduire la redondance, d’améliorer la cohérence et de faciliter les mises à jour.
