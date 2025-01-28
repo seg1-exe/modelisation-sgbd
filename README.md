@@ -1,11 +1,6 @@
-<center>
-
 # Projet de modélisation de bases de données
 
-##### Arthur Gillier - Florian Chacun
-
-</center>
-
+**Arthur Gillier - Florian Chacun**
 
 ## Résumé
 
@@ -133,7 +128,7 @@ Cette relation many-to-one entre les tables ```acte``` et ```commune``` permet d
 
 ## Schéma de la base de données
 
-![https://i.imgur.com/lJDXQRO.png](https://i.imgur.com/lJDXQRO.png)
+![https://i.imgur.com/uRH4WPi.png](https://i.imgur.com/uRH4WPi.png)
 
 
 Notez que les tables `departement`et `type` ne sont pas réellement des tables mais des enums.
@@ -409,4 +404,5 @@ Pour finir je tiens à remercier Florian Chacun avec qui nous avons travaillés 
 
 - Arthur Gillier
 - Florian Chacun
+- Aide à la rédaction par ChatGPT
 - Sujet : Université de La Rochelle.
